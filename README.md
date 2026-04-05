@@ -9,7 +9,8 @@
 
 ### Usage
 
-> kee <password> *<kdbx file|optional>*
+> kee -v # See version
+> kee **<kdbx password>** *<kdbx file|optional>* # Open database
 
 ### Database
 
