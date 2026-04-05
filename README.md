@@ -9,8 +9,16 @@
 
 ### Usage
 
-> kee -v # See version
-> kee **<kdbx password>** *<kdbx file|optional>* # Open database
+> See version
+
+```bash
+kee -v
+```
+> Open database
+
+```bash 
+kee <kdbx password> <kdbx file|optional>
+```
 
 ### Database
 
@@ -26,7 +34,11 @@ GOOS=linux GOARCH=amd64 go build -o bin/linux/kee kee.go
 GOOS=darwin GOARCH=amd64 go build -o bin/macos/kee kee.go
 
 ```
-or run bash build.sh*
+or run
+
+```bash 
+bash build.sh
+```
 
 ## Started
 
