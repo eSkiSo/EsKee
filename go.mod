@@ -1,4 +1,4 @@
-module github.com/eskiso/kee
+module github.com/eSkiSo/EsKee
 
 go 1.26.1
 
