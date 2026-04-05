@@ -3,7 +3,7 @@
 _Simple terminal keepass client in go_
 
 
-|[Screenshot](/screenshot.png)
+![Screenshot](/screenshot.png)
 
 ## Features
 
