@@ -30,10 +30,11 @@ var (
 	notesStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("5"))
 	urlStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("202"))
 	userStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("201"))
+	groupStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
 	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
-var version = "0.1 (2026/04/05)"
+var version = "0.2 (2026/04/05)"
 var databaseFile = getDBPath()
 
 type item struct {
@@ -42,9 +43,10 @@ type item struct {
 	username string
 	url string
 	notes string
+	group string
 }
 
-func (i item) Title() string { return i.title }
+func (i item) Title() string { return i.group + " › " + i.title }
 
 func (i item) Description() string { return i.username }
 
@@ -52,7 +54,14 @@ func (i item) Url() string { return i.url }
 
 func (i item) Notes() string { return i.notes }
 
-func (i item) FilterValue() string { return i.title + " " + i.username }
+func (i item) Group() string { return i.group }
+
+func (i item) FilterValue() string { return i.title + " " + i.username + " " + i.group }
+
+type EntryWithGroup struct {
+	Entry gokeepasslib.Entry
+	Group string
+}
 
 type model struct {
 	list        list.Model
@@ -63,16 +72,17 @@ type model struct {
 	height      int
 }
 
-func newModel(entries []gokeepasslib.Entry) model {
+func newModel(entries []EntryWithGroup) model {
 	items := []list.Item{}
 
 	for _, e := range entries {
 		items = append(items, item{
-			title:    e.GetTitle(),
-			password: e.GetPassword(),
-			username: e.GetContent("UserName"),
-			url: e.GetContent("URL"),
-			notes: e.GetContent("Notes"),
+			title:    e.Entry.GetTitle(),
+			password: e.Entry.GetPassword(),
+			username: e.Entry.GetContent("UserName"),
+			url: e.Entry.GetContent("URL"),
+			notes: e.Entry.GetContent("Notes"),
+			group: e.Group,
 		})
 	}
 
@@ -130,7 +140,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	if m.selected != nil {
 		return fmt.Sprintf(
-			"\n[ %s ]\nUser: %s\nPassword: %s\nURL: %s\nNotes:\n%s\n\n\n",
+			"\n[ %s › %s ]\nUser: %s\nPassword: %s\nURL: %s\nNotes:\n%s\n\n\n",
+			groupStyle.Render(m.selected.group),
 			titleStyle.Render(m.selected.title),
 			userStyle.Render(m.selected.username),
 			passStyle.Render(m.selected.password),
@@ -200,7 +211,7 @@ func main() {
 		os.Exit(0)
 	}
 
-    entries := collectAllEntries(db.Content.Root.Groups)
+    entries := collectEntriesWithGroup(db.Content.Root.Groups, "") //collectAllEntries(db.Content.Root.Groups)
 
     p := tea.NewProgram(newModel(entries))
     finalModel, err := p.Run()
@@ -238,6 +249,31 @@ func collectAllEntries(groups []gokeepasslib.Group) []gokeepasslib.Entry {
 	for _, g := range groups {
 		results = append(results, g.Entries...)
 		results = append(results, collectAllEntries(g.Groups)...)
+	}
+
+	return results
+}
+
+func collectEntriesWithGroup(groups []gokeepasslib.Group, parent string) []EntryWithGroup {
+	var results []EntryWithGroup
+
+	for _, g := range groups {
+		currentPath := g.Name
+		if parent != "" {
+			currentPath = parent + " › " + g.Name
+		}
+
+		// attach group to entries
+		for _, e := range g.Entries {
+			results = append(results, EntryWithGroup{
+				Entry: e,
+				Group: currentPath,
+			})
+		}
+
+		// recurse
+		results = append(results,
+			collectEntriesWithGroup(g.Groups, currentPath)...)
 	}
 
 	return results
