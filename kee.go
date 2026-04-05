@@ -117,6 +117,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			if i, ok := m.list.SelectedItem().(item); ok {
+				clipboard.WriteAll(i.password)
 				m.selected = &i
 				return m, tea.Quit
 			}
